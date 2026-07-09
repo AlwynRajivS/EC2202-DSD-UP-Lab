@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EC2202 — Digital System Design & Microprocessor Lab</title>
+<meta name="description" content="Lab record index for EC2202 Digital System Design and Microprocessor Laboratory — digital logic and 8086 microprocessor experiments.">
+<style>
+/* ============================================================
+   EC2202 — Digital System Design & Microprocessor Lab
+   Design language: silkscreen paper (light) / PCB soldermask (dark),
+   copper + trace-green accents, chip-card components.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+:root{
+  --bg:#F4F2EA;
+  --surface:#FFFFFF;
+  --surface-2:#EFEBDD;
+  --ink:#182620;
+  --muted:#5B6B61;
+  --accent:#2F7A4D;
+  --accent-ink:#FFFFFF;
+  --copper:#B5651D;
+  --line:#DBD6C7;
+  --shadow: 0 1px 2px rgba(24,38,32,.06), 0 8px 24px -12px rgba(24,38,32,.18);
+  --glow: 0 0 0 1px rgba(47,122,77,.25), 0 10px 28px -10px rgba(47,122,77,.35);
+  --radius: 14px;
+  --font-display:'Space Grotesk', system-ui, sans-serif;
+  --font-body:'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono:'IBM Plex Mono', ui-monospace, monospace;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"]{
+  --bg:#0E1712;
+  --surface:#152019;
+  --surface-2:#1A261E;
+  --ink:#EAF0E7;
+  --muted:#93A398;
+  --accent:#59D98C;
+  --accent-ink:#0E1712;
+  --copper:#E3A15C;
+  --line:#233129;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 28px -12px rgba(0,0,0,.55);
+  --glow: 0 0 0 1px rgba(89,217,140,.3), 0 0 32px -6px rgba(89,217,140,.45);
+  color-scheme: dark;
+}
+
+*{ box-sizing:border-box; }
+html{ scroll-behavior:smooth; }
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.55;
+  transition:background .25s ease, color .25s ease;
+}
+img,svg{ display:block; max-width:100%; }
+a{ color:inherit; }
+::selection{ background:var(--accent); color:var(--accent-ink); }
+
+/* focus visibility */
+a:focus-visible, button:focus-visible, input:focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:3px;
+  border-radius:4px;
+}
+
+@media (prefers-reduced-motion: reduce){
+  *{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
+}
+
+.wrap{ max-width:1180px; margin:0 auto; padding:0 24px; }
+
+/* ---------------- Header ---------------- */
+.site-header{
+  position:sticky; top:0; z-index:50;
+  background:color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.header-inner{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 0;
+  gap:16px;
+}
+.brand{ display:flex; align-items:center; gap:12px; text-decoration:none; }
+.brand-mark{
+  font-family:var(--font-mono); font-weight:600; font-size:13px;
+  letter-spacing:.04em;
+  background:var(--ink); color:var(--bg);
+  padding:6px 9px; border-radius:6px;
+}
+:root[data-theme="dark"] .brand-mark{ background:var(--accent); color:var(--accent-ink); }
+.brand-text{ font-family:var(--font-display); font-weight:600; font-size:15px; }
+.brand-text span{ display:block; font-family:var(--font-body); font-weight:400; font-size:11.5px; color:var(--muted); margin-top:1px; }
+
+.theme-toggle{
+  --w:56px; --h:30px;
+  position:relative;
+  width:var(--w); height:var(--h);
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:var(--surface-2);
+  cursor:pointer;
+  padding:0;
+  flex:0 0 auto;
+}
+.theme-toggle::before{
+  content:"";
+  position:absolute; top:3px; left:3px;
+  width:22px; height:22px; border-radius:50%;
+  background:var(--copper);
+  box-shadow:var(--shadow);
+  transition:transform .25s cubic-bezier(.4,0,.2,1), background .25s ease;
+}
+:root[data-theme="dark"] .theme-toggle::before{ transform:translateX(26px); background:var(--accent); }
+.theme-toggle .tt-icon{
+  position:absolute; top:50%; transform:translateY(-50%);
+  font-size:12px; line-height:1; color:var(--muted); pointer-events:none;
+}
+.theme-toggle .tt-sun{ left:7px; }
+.theme-toggle .tt-moon{ right:7px; }
+
+/* ---------------- Hero ---------------- */
+.hero{ padding:56px 0 28px; }
+.eyebrow{
+  font-family:var(--font-mono); font-size:12.5px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--accent); display:flex; align-items:center; gap:8px; margin-bottom:14px;
+}
+.eyebrow::before{ content:""; width:16px; height:1px; background:var(--accent); }
+h1.title{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(30px, 5vw, 46px);
+  line-height:1.08;
+  margin:0 0 12px;
+  letter-spacing:-.01em;
+}
+.hero p.lede{
+  max-width:60ch; color:var(--muted); font-size:16.5px; margin:0 0 26px;
+}
+.hero-meta{
+  display:flex; flex-wrap:wrap; gap:10px 26px;
+  font-family:var(--font-mono); font-size:12.5px; color:var(--muted);
+  padding-top:18px; border-top:1px dashed var(--line);
+}
+.hero-meta b{ color:var(--ink); font-weight:600; }
+
+/* ---------------- Controls ---------------- */
+.controls{
+  display:flex; flex-wrap:wrap; gap:12px; align-items:center;
+  margin:8px 0 8px;
+}
+.search-box{
+  position:relative; flex:1 1 260px; min-width:200px;
+}
+.search-box input{
+  width:100%; padding:11px 14px 11px 38px;
+  border-radius:10px; border:1px solid var(--line);
+  background:var(--surface); color:var(--ink);
+  font-family:var(--font-body); font-size:14.5px;
+}
+.search-box input::placeholder{ color:var(--muted); }
+.search-box .icon{
+  position:absolute; left:12px; top:50%; transform:translateY(-50%);
+  color:var(--muted); font-size:15px;
+}
+.filters{ display:flex; gap:8px; flex-wrap:wrap; }
+.chip{
+  font-family:var(--font-mono); font-size:12.5px;
+  padding:9px 14px; border-radius:999px;
+  border:1px solid var(--line); background:var(--surface);
+  color:var(--muted); cursor:pointer;
+  transition:.15s ease;
+}
+.chip:hover{ color:var(--ink); border-color:var(--accent); }
+.chip[aria-pressed="true"]{
+  background:var(--ink); color:var(--bg); border-color:var(--ink);
+}
+:root[data-theme="dark"] .chip[aria-pressed="true"]{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+
+.no-results{
+  display:none; text-align:center; padding:48px 16px; color:var(--muted);
+  font-family:var(--font-mono); font-size:14px;
+}
+.no-results.visible{ display:block; }
+
+/* ---------------- Sections / trace header ---------------- */
+.board{ padding:44px 0 8px; }
+.board-head{ margin-bottom:22px; }
+.board-title-row{ display:flex; align-items:center; gap:14px; margin-bottom:4px; }
+.board-title{
+  font-family:var(--font-display); font-weight:600; font-size:20px;
+  letter-spacing:.01em; white-space:nowrap;
+}
+.trace{ flex:1; height:14px; overflow:visible; }
+.trace svg{ width:100%; height:14px; display:block; }
+.trace path{ stroke:var(--line); stroke-width:1.5; fill:none; }
+.trace circle{ fill:var(--copper); }
+.board-sub{ color:var(--muted); font-size:13.5px; font-family:var(--font-mono); }
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(250px, 1fr));
+  gap:16px;
+}
+
+/* ---------------- Chip card ---------------- */
+.chip-card{
+  position:relative;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:20px 18px 18px;
+  text-decoration:none;
+  color:var(--ink);
+  display:flex; flex-direction:column; gap:14px;
+  box-shadow:var(--shadow);
+  transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  isolation:isolate;
+}
+.chip-card::before, .chip-card::after{
+  content:"";
+  position:absolute; left:22px; right:22px; height:6px;
+  background-image:repeating-linear-gradient(90deg, var(--copper) 0 6px, transparent 6px 14px);
+  opacity:.55;
+}
+.chip-card::before{ top:-4px; }
+.chip-card::after{ bottom:-4px; }
+.chip-card:hover, .chip-card:focus-visible{
+  transform:translateY(-3px);
+  box-shadow:var(--glow);
+  border-color:var(--accent);
+}
+.chip-card:hover .card-cta, .chip-card:focus-visible .card-cta{ gap:10px; }
+
+.card-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+.card-num{
+  font-family:var(--font-mono); font-weight:600; font-size:13px;
+  background:var(--surface-2); color:var(--accent);
+  border:1px solid var(--line);
+  border-radius:7px; padding:4px 8px;
+  letter-spacing:.02em;
+}
+.card-pin1{
+  width:8px; height:8px; border-radius:50%;
+  background:var(--copper);
+  margin-top:6px;
+}
+.card-title{
+  font-family:var(--font-display); font-weight:600; font-size:15.5px;
+  line-height:1.3; margin:0;
+  flex:1;
+}
+.card-cta{
+  margin-top:auto; display:inline-flex; align-items:center; gap:6px;
+  font-family:var(--font-mono); font-size:12.5px; color:var(--accent);
+  transition:gap .18s ease;
+}
+
+/* ---------------- Footer ---------------- */
+.site-footer{
+  margin-top:60px; border-top:1px solid var(--line);
+  padding:28px 0 40px;
+  color:var(--muted); font-size:13px;
+  display:flex; flex-wrap:wrap; gap:10px 20px; justify-content:space-between; align-items:center;
+}
+.site-footer .fm{ font-family:var(--font-mono); font-size:12px; }
+
+/* ---------------- Experiment page ---------------- */
+.exp-header{
+  padding:34px 0 20px; border-bottom:1px solid var(--line);
+}
+.back-link{
+  display:inline-flex; align-items:center; gap:6px;
+  font-family:var(--font-mono); font-size:12.5px; color:var(--muted);
+  text-decoration:none; margin-bottom:18px;
+}
+.back-link:hover{ color:var(--accent); }
+.exp-tag{
+  font-family:var(--font-mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--copper); margin-bottom:10px; display:block;
+}
+h1.exp-title{
+  font-family:var(--font-display); font-weight:700;
+  font-size:clamp(24px, 4vw, 34px); margin:0 0 6px; line-height:1.15;
+}
+.exp-meta{ color:var(--muted); font-family:var(--font-mono); font-size:12.5px; }
+
+.exp-body{ padding:32px 0 60px; display:grid; gap:22px; }
+.panel{
+  background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+  padding:22px 24px; box-shadow:var(--shadow);
+}
+.panel h2{
+  font-family:var(--font-display); font-size:16px; margin:0 0 12px;
+  display:flex; align-items:center; gap:8px;
+}
+.panel h2::before{
+  content:""; width:8px; height:8px; border-radius:50%; background:var(--accent);
+}
+.panel p, .panel li{ color:var(--ink); font-size:14.5px; }
+.panel ol, .panel ul{ padding-left:20px; margin:0; }
+.panel li{ margin-bottom:8px; }
+.placeholder-box{
+  border:1.5px dashed var(--line); border-radius:10px;
+  padding:26px; text-align:center; color:var(--muted);
+  font-family:var(--font-mono); font-size:12.5px; background:var(--surface-2);
+}
+.editable-note{
+  font-family:var(--font-mono); font-size:11.5px; color:var(--muted);
+  margin-top:8px;
+}
+.exp-nav{
+  display:flex; justify-content:space-between; gap:12px; padding-top:8px;
+}
+.exp-nav a{
+  font-family:var(--font-mono); font-size:12.5px; text-decoration:none;
+  color:var(--muted); border:1px solid var(--line); border-radius:8px;
+  padding:9px 14px; transition:.15s ease;
+}
+.exp-nav a:hover{ color:var(--accent); border-color:var(--accent); }
+.exp-nav a.disabled{ opacity:.35; pointer-events:none; }
+
+@media (max-width:640px){
+  .wrap{ padding:0 18px; }
+  .hero{ padding:38px 0 20px; }
+  .board{ padding:32px 0 4px; }
+  .board-title{ font-size:17px; }
+  .site-footer{ flex-direction:column; align-items:flex-start; }
+}
+
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">EC2202</span>
+      <span class="brand-text">DSD &amp; μP Lab<span>Record index</span></span>
+    </a>
+    <button class="theme-toggle" aria-pressed="false" aria-label="Toggle dark mode" title="Toggle light / dark theme">
+      <span class="tt-icon tt-sun">☀</span>
+      <span class="tt-icon tt-moon">☾</span>
+    </button>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <span class="eyebrow">Lab record</span>
+      <h1 class="title">Digital System Design &amp;<br>Microprocessor Laboratory</h1>
+      <p class="lede">A running index of every experiment in the DSD &amp; Microprocessor lab — logic-gate circuits through 8086 assembly programs. Open any card to view aim, procedure and results for that exercise.</p>
+      <div class="hero-meta">
+        <span><b>Course</b>&nbsp;EC2202</span>
+        <span><b>Experiments</b>&nbsp;11 logged</span>
+        <span><b>Sections</b>&nbsp;Digital · Microprocessor</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <div class="controls">
+      <div class="search-box">
+        <span class="icon">⌕</span>
+        <input id="expSearch" type="text" placeholder="Search experiments…" autocomplete="off">
+      </div>
+      <div class="filters" role="group" aria-label="Filter by section">
+        <button class="chip" data-filter="all" aria-pressed="true">All</button>
+        <button class="chip" data-filter="digital" aria-pressed="false">Digital</button>
+        <button class="chip" data-filter="micro" aria-pressed="false">Microprocessor</button>
+      </div>
+    </div>
+    <p class="no-results" id="noResults">No experiments match your search.</p>
+  </div>
+
+  <!-- ===================== DIGITAL EXPERIMENTS ===================== -->
+  <section class="board" data-board="digital">
+    <div class="wrap">
+      <div class="board-head">
+        <div class="board-title-row">
+          <h2 class="board-title">Digital Experiments</h2>
+          <div class="trace" aria-hidden="true"></div>
+        </div>
+        <p class="board-sub">Combinational &amp; sequential logic · 01–07</p>
+      </div>
+
+      <div class="grid">
+
+        <a class="chip-card" data-board="digital" data-title="Verification of Boolean Theorems using basic gates" href="experiments/exp1.html">
+          <div class="card-top"><span class="card-num">01</span><span class="card-pin1"></span></div>
+          <h3 class="card-title">Verification of Boolean Theorems using basic gates</h3>
+          <span class="card-cta">Open experiment →</span>
+        </a>
+
+        <a class="chip-card" data-board="digital" data-title="Design and implementation of combinational circuits using basic gates for arbitrary functions" href="experiments/exp2.html">
+          <div class="card-top"><span class="card-num">02</span><span class="card-pin1"></span></div>
+          <h3 class="card-title">Design and implementation of combinational circuits for arbitrary functions</h3>
+          <span class="card-cta">Open experiment →</span>
+        </a>
+
+        <a class="chip-card" data-board="digital" data-title="Design and implementation of Half/Full Adder and Subtractor" href="experiments/exp3.html">
+          <div class="card-top"><span class="card-num">03</span><span class="card-pin1"></span></div>
+          <h3 class="card-title">Design and implementation of Half/Full Adder and Subtractor</h3>
+          <span class="card-cta">Open experiment →</span>
+        </a>
+
+        <a class="chip-card" data-board="digital" data-title="Code Converter BCD to Excess-3, Binary to Gray and vice versa, Parity Generator and Checker" href="experiments/exp4.html">
+          <div class="card-top"><span class="card-num">04</span><span class="card-pin1"></span></div>
+          <h3 class="card-title">Code Converter (BCD↔Excess-3, Binary↔Gray) &amp; Parity Generator/Checker</h3>
+          <span class="card-cta">Open experiment →</span>
+        </a>
+
+        <a class="chip-card" data-board="digital" data-title="Design and implementation of Encoder Decoder Multiplexer and Demultiplexer using logic gates" href="experiments/exp5.html">
+          <div class="card-top"><span class="card-num">05</span><span class="card-pin1"></span></div>
+          <h3 class="card-title">Encoder, Decoder, Multiplexer and Demultiplexer using logic gates</h3>
+          <span class="card-cta">Open experiment →</span>
+        </a>
+
+        <a class="chip-card" data-board="digital" data-title="Design and implementation of Shift register using Flip flops" href="experiments/exp6.html">
+          <div class="card-top"><span class="card-num">06</span><span class="card-pin1"></span></div>
+          <h3 class="card-title">Design and implementation of Shift register using Flip-flops</h3>
+          <span class="card-cta">Open experiment →</span>
+        </a>
+
+        <a class="chip-card" data-board="digital" data-title="Design and implementation of Synchronous counters" href="experiments/exp7.html">
+          <div class="card-top"><span class="card-num">07</span><span class="card-pin1"></span></div>
+          <h3 class="card-title">Design and implementation of Synchronous counters</h3>
+          <span class="card-cta">Open experiment →</span>
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ================== MICROPROCESSOR EXPERIMENTS ================== -->
+  <section class="board" data-board="micro">
+    <div class="wrap">
+      <div class="board-head">
+        <div class="board-title-row">
+          <h2 class="board-title">Microprocessor Experiments</h2>
+          <div class="trace" aria-hidden="true"></div>
+        </div>
+        <p class="board-sub">8086 programs using kits · 08–11</p>
+      </div>
+
+      <div class="grid">
+
+        <a class="chip-card" data-board="micro" data-title="Basic arithmetic and Logical operations" href="experiments/exp8.html">
+          <div class="card-top"><span class="card-num">08</span><span class="card-pin1"></span></div>
+          <h3 class="card-title">Basic arithmetic and logical operations</h3>
+          <span class="card-cta">Open experiment →</span>
+        </a>
+
+        <a class="chip-card" data-board="micro" data-title="Move a data block without overlap" href="experiments/exp9.html">
+          <div class="card-top"><span class="card-num">09</span><span class="card-pin1"></span></div>
+          <h3 class="card-title">Move a data block without overlap</h3>
+          <span class="card-cta">Open experiment →</span>
+        </a>
+
+        <a class="chip-card" data-board="micro" data-title="Traffic light control" href="experiments/exp10.html">
+          <div class="card-top"><span class="card-num">10</span><span class="card-pin1"></span></div>
+          <h3 class="card-title">Traffic light control</h3>
+          <span class="card-cta">Open experiment →</span>
+        </a>
+
+        <a class="chip-card" data-board="micro" data-title="Keyboard and Display Interface" href="experiments/exp11.html">
+          <div class="card-top"><span class="card-num">11</span><span class="card-pin1"></span></div>
+          <h3 class="card-title">Keyboard and Display Interface</h3>
+          <span class="card-cta">Open experiment →</span>
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <p class="editable-note" style="margin:36px 0 0;">More experiments beyond No. 11 in your syllabus? Copy a <code>.chip-card</code> block and an <code>experiments/expN.html</code> file to extend the list — the search, filters and theme all pick up new cards automatically.</p>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap" style="display:flex; flex-wrap:wrap; gap:10px 20px; justify-content:space-between; width:100%;">
+    <span>EC2202 · Digital System Design &amp; Microprocessor Laboratory</span>
+    <span class="fm">Built with HTML &amp; CSS · light / dark theme</span>
+  </div>
+</footer>
+
+<script>
+// ============================================================
+// EC2202 Lab — shared behaviour (theme toggle, search, filters)
+// Theme choice lives in memory for this browsing session and
+// falls back to the system preference on load/refresh.
+// ============================================================
+
+(function () {
+  const root = document.documentElement;
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+
+  function applyTheme(theme) {
+    root.setAttribute('data-theme', theme);
+    const btn = document.querySelector('.theme-toggle');
+    if (btn) btn.setAttribute('aria-pressed', theme === 'dark');
+  }
+
+  applyTheme(prefersDark.matches ? 'dark' : 'light');
+  prefersDark.addEventListener('change', (e) => {
+    applyTheme(e.matches ? 'dark' : 'light');
+  });
+
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.theme-toggle');
+    if (!btn) return;
+    const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+  });
+
+  // ---------- Search + filter (index page only) ----------
+  const searchInput = document.getElementById('expSearch');
+  const chips = document.querySelectorAll('.chip[data-filter]');
+  const cards = document.querySelectorAll('.chip-card[data-title]');
+  const boards = document.querySelectorAll('.board[data-board]');
+  const noResults = document.getElementById('noResults');
+
+  let activeFilter = 'all';
+
+  function refine() {
+    const q = (searchInput?.value || '').trim().toLowerCase();
+    let anyVisible = false;
+
+    cards.forEach((card) => {
+      const inFilter = activeFilter === 'all' || card.dataset.board === activeFilter;
+      const inSearch = !q || card.dataset.title.toLowerCase().includes(q);
+      const show = inFilter && inSearch;
+      card.style.display = show ? '' : 'none';
+      if (show) anyVisible = true;
+    });
+
+    boards.forEach((board) => {
+      const visibleCards = board.querySelectorAll('.chip-card[data-title]:not([style*="display: none"])');
+      const boardMatchesFilter = activeFilter === 'all' || board.dataset.board === activeFilter;
+      board.style.display = boardMatchesFilter && visibleCards.length > 0 ? '' : 'none';
+    });
+
+    if (noResults) noResults.classList.toggle('visible', !anyVisible);
+  }
+
+  if (searchInput) searchInput.addEventListener('input', refine);
+
+  chips.forEach((chip) => {
+    chip.addEventListener('click', () => {
+      chips.forEach((c) => c.setAttribute('aria-pressed', 'false'));
+      chip.setAttribute('aria-pressed', 'true');
+      activeFilter = chip.dataset.filter;
+      refine();
+    });
+  });
+
+  // ---------- Decorative trace line (PCB-style connector) ----------
+  document.querySelectorAll('.trace').forEach((el) => {
+    const w = 600, h = 14;
+    const vias = 5;
+    let d = `M0,${h / 2}`;
+    let dots = '';
+    for (let i = 1; i <= vias; i++) {
+      const x = (w / (vias + 1)) * i;
+      const jog = i % 2 === 0 ? h / 2 - 5 : h / 2 + 5;
+      d += ` L${x - 14},${h / 2} L${x - 6},${jog} L${x + 6},${jog} L${x + 14},${h / 2}`;
+      dots += `<circle cx="${x}" cy="${jog}" r="1.8"></circle>`;
+    }
+    d += ` L${w},${h / 2}`;
+    el.innerHTML = `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><path d="${d}"></path>${dots}</svg>`;
+  });
+})();
+
+</script>
+</body>
+</html>
