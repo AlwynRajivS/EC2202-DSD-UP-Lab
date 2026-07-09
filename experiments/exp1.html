@@ -1,0 +1,819 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Exp 01 — Logic Gates &amp; Boolean Algebra Verification · EC2202</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+:root{
+  --bg:#F4F2EA; --surface:#FFFFFF; --surface-2:#EFEBDD;
+  --ink:#182620; --muted:#5B6B61; --accent:#2F7A4D; --accent-ink:#FFFFFF;
+  --copper:#B5651D; --line:#DBD6C7; --bad:#B23A3A;
+  --shadow: 0 1px 2px rgba(24,38,32,.06), 0 8px 24px -12px rgba(24,38,32,.18);
+  --glow: 0 0 0 1px rgba(47,122,77,.25), 0 10px 28px -10px rgba(47,122,77,.35);
+  --radius:14px;
+  --font-display:'Space Grotesk',system-ui,sans-serif;
+  --font-body:'IBM Plex Sans',system-ui,sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,monospace;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#0E1712; --surface:#152019; --surface-2:#1A261E;
+  --ink:#EAF0E7; --muted:#93A398; --accent:#59D98C; --accent-ink:#0E1712;
+  --copper:#E3A15C; --line:#233129; --bad:#E06767;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 28px -12px rgba(0,0,0,.55);
+  --glow: 0 0 0 1px rgba(89,217,140,.3), 0 0 32px -6px rgba(89,217,140,.45);
+  color-scheme:dark;
+}
+*{ box-sizing:border-box; }
+html{ scroll-behavior:smooth; overflow-x:hidden; }
+body{ margin:0; background:var(--bg); color:var(--ink); font-family:var(--font-body); font-size:16px; line-height:1.55; transition:background .25s ease,color .25s ease; overflow-x:hidden; max-width:100vw; }
+a{ color:inherit; }
+::selection{ background:var(--accent); color:var(--accent-ink); }
+a:focus-visible, button:focus-visible, input:focus-visible{ outline:2px solid var(--accent); outline-offset:3px; border-radius:4px; }
+@media (prefers-reduced-motion: reduce){ *{ animation-duration:.001ms !important; transition-duration:.001ms !important; } }
+.wrap{ max-width:1180px; margin:0 auto; padding:0 24px; }
+svg{ display:block; max-width:100%; }
+
+/* progress rail */
+.progress-rail{ position:sticky; top:0; z-index:60; height:3px; width:100%; background:var(--line); }
+.progress-fill{ height:100%; width:0%; background:linear-gradient(90deg,var(--copper),var(--accent)); box-shadow:0 0 10px 0 color-mix(in srgb, var(--accent) 60%, transparent); transition:width .08s linear; }
+
+/* header */
+.site-header{ position:sticky; top:3px; z-index:50; background:color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); }
+.header-inner{ display:flex; align-items:center; justify-content:space-between; padding:14px 0; gap:16px; }
+.brand{ display:flex; align-items:center; gap:12px; text-decoration:none; }
+.brand-mark{ font-family:var(--font-mono); font-weight:600; font-size:13px; letter-spacing:.04em; background:var(--ink); color:var(--bg); padding:6px 9px; border-radius:6px; }
+:root[data-theme="dark"] .brand-mark{ background:var(--accent); color:var(--accent-ink); }
+.brand-text{ font-family:var(--font-display); font-weight:600; font-size:15px; }
+.brand-text span{ display:block; font-family:var(--font-body); font-weight:400; font-size:11.5px; color:var(--muted); margin-top:1px; }
+.theme-toggle{ --w:56px; --h:30px; position:relative; width:var(--w); height:var(--h); border-radius:999px; border:1px solid var(--line); background:var(--surface-2); cursor:pointer; padding:0; flex:0 0 auto; }
+.theme-toggle::before{ content:""; position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:50%; background:var(--copper); box-shadow:var(--shadow); transition:transform .25s cubic-bezier(.4,0,.2,1), background .25s ease; }
+:root[data-theme="dark"] .theme-toggle::before{ transform:translateX(26px); background:var(--accent); }
+.theme-toggle .tt-icon{ position:absolute; top:50%; transform:translateY(-50%); font-size:12px; line-height:1; color:var(--muted); pointer-events:none; }
+.theme-toggle .tt-sun{ left:7px; } .theme-toggle .tt-moon{ right:7px; }
+.back-link{ display:inline-flex; align-items:center; gap:6px; font-family:var(--font-mono); font-size:12.5px; color:var(--muted); text-decoration:none; transition:gap .18s ease,color .15s ease; }
+.back-link:hover{ color:var(--accent); gap:10px; }
+.exp-header{ padding:30px 0 22px; opacity:0; animation:riseIn .6s ease forwards; }
+.exp-tag{ font-family:var(--font-mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--copper); margin:14px 0 10px; display:inline-flex; align-items:center; gap:8px; }
+.status-dot{ width:8px; height:8px; border-radius:50%; background:var(--accent); animation:ledPulse 2.2s ease-in-out infinite; }
+h1.exp-title{ font-family:var(--font-display); font-weight:700; font-size:clamp(24px,4vw,36px); margin:0 0 14px; line-height:1.15; }
+.title-trace{ position:relative; height:3px; width:100%; max-width:300px; margin-bottom:14px; border-radius:2px; background:var(--line); overflow:hidden; }
+.title-trace::after{ content:""; position:absolute; top:0; left:-40%; height:100%; width:40%; background:linear-gradient(90deg,transparent,var(--accent),var(--copper),transparent); animation:currentFlow 2.6s ease-in-out infinite; }
+.exp-lede{ color:var(--muted); max-width:68ch; font-size:15.5px; margin:0; }
+
+.apparatus{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr)); gap:10px; margin-top:20px; }
+.apparatus .item{ background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px 12px; font-family:var(--font-mono); font-size:12px; color:var(--muted); }
+.apparatus .item b{ display:block; color:var(--ink); font-family:var(--font-body); font-size:13.5px; font-weight:600; margin-bottom:2px; }
+
+/* tabs */
+.tabbar{ position:sticky; top:63px; z-index:40; background:color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter:blur(8px); border-bottom:1px solid var(--line); padding:12px 0; }
+.tabs{ display:flex; gap:8px; flex-wrap:wrap; }
+.tab-btn{ font-family:var(--font-mono); font-size:13px; padding:10px 16px; border-radius:999px; border:1px solid var(--line); background:var(--surface); color:var(--muted); cursor:pointer; transition:.15s ease; }
+.tab-btn:hover{ color:var(--ink); border-color:var(--accent); }
+.tab-btn.active{ background:var(--ink); color:var(--bg); border-color:var(--ink); }
+:root[data-theme="dark"] .tab-btn.active{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.tab-btn .count{ opacity:.6; margin-left:5px; }
+
+.tab-panel{ display:none; padding:34px 0 60px; }
+.tab-panel.active{ display:block; animation:riseIn .45s ease; }
+.section-intro{ margin-bottom:26px; }
+.section-intro h2{ font-family:var(--font-display); font-size:21px; margin:0 0 6px; }
+.section-intro p{ color:var(--muted); font-size:14.5px; margin:0; max-width:70ch; }
+
+.card-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(430px,100%),1fr)); gap:20px; }
+.card-grid.laws{ grid-template-columns:repeat(auto-fit,minmax(min(460px,100%),1fr)); }
+
+@keyframes riseIn{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+@keyframes ledPulse{ 0%,100%{ box-shadow:0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent);} 50%{ box-shadow:0 0 0 5px color-mix(in srgb, var(--accent) 0%, transparent);} }
+@keyframes currentFlow{ 0%{left:-40%;} 100%{left:100%;} }
+
+.site-footer{ margin-top:20px; border-top:1px solid var(--line); padding:26px 0 44px; color:var(--muted); font-size:13px; display:flex; flex-wrap:wrap; gap:10px 20px; justify-content:space-between; }
+.site-footer .fm{ font-family:var(--font-mono); font-size:12px; }
+
+@media (max-width:640px){
+  .wrap{ padding:0 16px; }
+  .exp-header{ padding:22px 0 16px; }
+  .tabbar{ position:static; padding:10px 0; }
+  .tab-btn{ padding:9px 12px; font-size:12px; }
+  .tab-btn .count{ display:block; margin-left:0; font-size:10.5px; }
+  .section-intro h2{ font-size:19px; }
+  h1.exp-title{ font-size:23px; }
+  .g-card, .law-card{ padding:16px 14px 18px; }
+}
+@media (max-width:400px){
+  .apparatus{ grid-template-columns:repeat(2,1fr); }
+  .switch{ --sw:40px; --sh:22px; }
+}
+.g-card, .law-card{
+  background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+  padding:20px 20px 22px; box-shadow:var(--shadow);
+  opacity:0; transform:translateY(16px);
+  transition:opacity .5s ease, transform .5s ease, border-color .2s ease, box-shadow .2s ease;
+  position:relative; overflow:hidden;
+}
+.g-card.in-view, .law-card.in-view{ opacity:1; transform:translateY(0); }
+.g-card:hover, .law-card:hover{ border-color:color-mix(in srgb, var(--accent) 45%, var(--line)); box-shadow:var(--glow); }
+.g-card::before, .law-card::before{
+  content:""; position:absolute; top:-4px; left:22px; right:22px; height:6px;
+  background-image:repeating-linear-gradient(90deg, var(--copper) 0 6px, transparent 6px 14px);
+  opacity:.5;
+}
+
+.g-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; gap:10px; }
+.g-head h3{ font-family:var(--font-display); font-size:17px; margin:0; }
+.ic-badge{ font-family:var(--font-mono); font-size:11.5px; color:var(--accent); background:var(--surface-2); border:1px solid var(--line); border-radius:7px; padding:4px 9px; white-space:nowrap; }
+
+.g-body{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media (max-width:680px){ .g-body{ grid-template-columns:1fr; } }
+
+.g-visuals{ display:flex; flex-direction:column; gap:10px; }
+.visual-box{ background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:10px; }
+.visual-box .lbl{ font-family:var(--font-mono); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+.visual-box svg .sym-line{ stroke:var(--ink); stroke-width:2.5; fill:none; }
+.visual-box svg .sym-fill{ fill:var(--surface); stroke:var(--ink); stroke-width:2.5; }
+.visual-box svg .sym-bubble{ fill:var(--surface); stroke:var(--ink); stroke-width:2.5; }
+.visual-box svg text{ font-family:var(--font-mono); fill:var(--muted); }
+
+.expr-line{ font-family:var(--font-mono); font-size:14px; text-align:center; margin-top:2px; color:var(--ink); background:var(--surface); border:1px dashed var(--line); border-radius:8px; padding:6px 8px; }
+
+.g-sim{ display:flex; flex-direction:column; gap:10px; }
+.sim-controls{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:12px; }
+.io-toggle{ display:flex; flex-direction:column; align-items:center; gap:6px; }
+.io-toggle .io-label{ font-family:var(--font-mono); font-size:12px; color:var(--muted); }
+.switch{ --sw:44px; --sh:24px; position:relative; width:var(--sw); height:var(--sh); border-radius:999px; border:1px solid var(--line); background:var(--surface); cursor:pointer; }
+.switch::before{ content:""; position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%; background:var(--muted); transition:transform .2s cubic-bezier(.4,0,.2,1), background .2s ease; }
+.switch.on{ background:color-mix(in srgb, var(--accent) 24%, var(--surface)); border-color:var(--accent); }
+.switch.on::before{ transform:translateX(20px); background:var(--accent); }
+
+.output-readout{ display:flex; align-items:center; justify-content:center; gap:14px; padding:10px; }
+.led{ width:30px; height:30px; border-radius:50%; background:var(--surface); border:2px solid var(--line); position:relative; transition:.2s ease; }
+.led.on{ background:var(--accent); border-color:var(--accent); box-shadow:0 0 16px 4px color-mix(in srgb, var(--accent) 55%, transparent); }
+.led-label{ font-family:var(--font-mono); font-size:13px; color:var(--muted); }
+.led-label b{ color:var(--ink); font-size:15px; }
+
+.tt-wrap{ overflow-x:auto; }
+table.truth{ width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:12.5px; }
+table.truth th, table.truth td{ border:1px solid var(--line); padding:6px 9px; text-align:center; }
+table.truth th{ background:var(--surface-2); color:var(--muted); font-weight:600; }
+table.truth tr.active-row td{ background:color-mix(in srgb, var(--accent) 18%, transparent); font-weight:600; color:var(--ink); }
+table.truth td.col-out{ color:var(--accent); font-weight:600; }
+
+/* law cards */
+.law-head{ margin-bottom:12px; }
+.law-head .lname{ font-family:var(--font-mono); font-size:11.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--copper); }
+.law-head h3{ font-family:var(--font-display); font-size:16.5px; margin:6px 0 0; }
+.law-eq{ font-family:var(--font-mono); font-size:14px; background:var(--surface-2); border:1px dashed var(--line); border-radius:8px; padding:8px 10px; margin:10px 0 14px; text-align:center; }
+
+.law-diagrams{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:6px 0 16px; }
+.diagram-box{ background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:10px; }
+.diagram-box .lbl{ font-family:var(--font-mono); font-size:10.5px; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.diagram-scroll{ overflow-x:auto; padding-bottom:2px; }
+.diagram-scroll svg{ min-width:200px; height:auto; }
+.diagram-scroll svg .wire{ stroke:var(--ink); stroke-width:1.6; fill:none; }
+.diagram-scroll svg .sym-fill{ fill:var(--surface); stroke:var(--ink); stroke-width:1.8; }
+.diagram-scroll svg .sym-bubble{ fill:var(--surface); stroke:var(--ink); stroke-width:1.8; }
+.diagram-scroll svg .lbl-var{ fill:var(--ink); font-family:var(--font-mono); font-weight:600; }
+.diagram-scroll svg .node-dot{ fill:var(--copper); }
+@media (max-width:620px){ .law-diagrams{ grid-template-columns:1fr; } }
+
+.law-sim{ display:flex; gap:16px; flex-wrap:wrap; align-items:flex-start; margin-bottom:14px; }
+.law-toggles{ display:flex; gap:10px; }
+.law-readout{ display:flex; align-items:center; gap:16px; flex:1 1 220px; justify-content:center; background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:10px 14px; }
+.lamp-pair{ display:flex; align-items:center; gap:8px; }
+.lamp-pair .lamp-name{ font-family:var(--font-mono); font-size:11.5px; color:var(--muted); }
+.match-badge{ font-family:var(--font-mono); font-size:12px; padding:5px 10px; border-radius:999px; background:color-mix(in srgb, var(--accent) 20%, transparent); color:var(--accent); border:1px solid color-mix(in srgb, var(--accent) 45%, var(--line)); display:inline-flex; align-items:center; gap:6px; }
+.match-badge::before{ content:"✓"; }
+
+.law-table-toggle{ font-family:var(--font-mono); font-size:11.5px; color:var(--muted); background:none; border:1px solid var(--line); border-radius:7px; padding:6px 10px; cursor:pointer; }
+.law-table-toggle:hover{ color:var(--accent); border-color:var(--accent); }
+.law-table{ margin-top:12px; display:none; }
+.law-table.open{ display:block; }
+table.truth td.col-lhs{ color:var(--copper); font-weight:600; }
+table.truth td.col-rhs{ color:var(--accent); font-weight:600; }
+
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-fill" id="progressFill"></div></div>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="../index.html">
+      <span class="brand-mark">EC2202</span>
+      <span class="brand-text">DSD &amp; μP Lab<span>Record index</span></span>
+    </a>
+    <button class="theme-toggle" aria-pressed="false" aria-label="Toggle dark mode" title="Toggle light / dark theme">
+      <span class="tt-icon tt-sun">☀</span>
+      <span class="tt-icon tt-moon">☾</span>
+    </button>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div class="exp-header">
+      <a class="back-link" href="../index.html">&larr; Back to index</a>
+      <span class="exp-tag"><span class="status-dot"></span>Digital Experiment · Experiment 01</span>
+      <h1 class="exp-title">Logic Gates &amp; Boolean Algebra — Verification Lab</h1>
+      <div class="title-trace"></div>
+      <p class="exp-lede">Verify the basic and universal logic gates and the fundamental Boolean algebra theorems. Every gate and every law below is a live simulator — flip the switches and watch the IEEE/ANSI symbol, IC pinout and circuit diagram respond in real time.</p>
+
+      <div class="apparatus">
+        <div class="item"><b>IC 7408</b>Quad 2-input AND</div>
+        <div class="item"><b>IC 7432</b>Quad 2-input OR</div>
+        <div class="item"><b>IC 7404</b>Hex Inverter (NOT)</div>
+        <div class="item"><b>IC 7400</b>Quad 2-input NAND</div>
+        <div class="item"><b>IC 7402</b>Quad 2-input NOR</div>
+        <div class="item"><b>IC 7486</b>Quad 2-input XOR</div>
+        <div class="item"><b>Trainer Kit</b>Digital IC trainer, 1 No.</div>
+        <div class="item"><b>Wires</b>As required</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabbar">
+    <div class="wrap tabs">
+      <button class="tab-btn active" data-target="tab-1a">1a · Basic Gates <span class="count">AND · OR · NOT</span></button>
+      <button class="tab-btn" data-target="tab-1b">1b · Universal &amp; XOR Gates <span class="count">NAND · NOR · XOR</span></button>
+      <button class="tab-btn" data-target="tab-1c">1c · Boolean Algebra <span class="count">12 laws</span></button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <section id="tab-1a" class="tab-panel active">
+      <div class="section-intro">
+        <h2>1a. Basic Gates</h2>
+        <p>AND, OR and NOT are the fundamental building blocks of digital logic. Toggle the inputs on each simulator to verify the truth table live.</p>
+      </div>
+      <div class="card-grid" id="gates1a"></div>
+    </section>
+
+    <section id="tab-1b" class="tab-panel">
+      <div class="section-intro">
+        <h2>1b. Universal &amp; XOR Gates</h2>
+        <p>NAND and NOR are universal gates — either one alone can implement any Boolean function. XOR is the "difference" gate, true only when inputs disagree.</p>
+      </div>
+      <div class="card-grid" id="gates1b"></div>
+    </section>
+
+    <section id="tab-1c" class="tab-panel">
+      <div class="section-intro">
+        <h2>1c. Boolean Algebra Theorems</h2>
+        <p>Each law below draws its own L.H.S and R.H.S circuit from the expression. Flip the input switches — the LHS and RHS lamps always agree, proving the identity for every combination. Expand the table for the full reference truth table.</p>
+      </div>
+      <div class="card-grid laws" id="lawsContainer"></div>
+    </section>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap" style="display:flex; flex-wrap:wrap; gap:10px 20px; justify-content:space-between; width:100%;">
+    <span>EC2202 &middot; Digital System Design &amp; Microprocessor Laboratory</span>
+    <span class="fm">Experiment 01 &middot; Interactive gate &amp; theorem verification</span>
+  </div>
+</footer>
+
+<script>
+// ============================================================
+// IEEE/ANSI-style logic gate symbols & IC DIP-14 pin diagrams,
+// generated as inline SVG strings.
+// ============================================================
+
+const AND_D = "M14,10 H62 A30,30 0 0 1 62,70 H14 Z";
+const OR_D  = "M14,10 C56,10 88,25 96,40 C88,55 56,70 14,70 C28,55 28,25 14,10 Z";
+const XOR_EXTRA_D = "M4,10 C18,25 18,55 4,70";
+
+function svgWrap(inner, w = 150, h = 84) {
+  return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
+}
+
+function ioLines(inputs, outX, hasBubble) {
+  let s = "";
+  if (inputs === 1) {
+    s += `<line class="sym-line" x1="0" y1="40" x2="14" y2="40"/>`;
+    s += `<text x="2" y="34" font-size="9">A</text>`;
+  } else {
+    s += `<line class="sym-line" x1="0" y1="25" x2="14" y2="25"/>`;
+    s += `<line class="sym-line" x1="0" y1="55" x2="14" y2="55"/>`;
+    s += `<text x="2" y="20" font-size="9">A</text>`;
+    s += `<text x="2" y="50" font-size="9">B</text>`;
+  }
+  const outStart = hasBubble ? outX + 8 : outX;
+  s += `<line class="sym-line" x1="${outStart}" y1="40" x2="130" y2="40"/>`;
+  s += `<text x="112" y="34" font-size="9">Y</text>`;
+  if (hasBubble) s += `<circle class="sym-bubble" cx="${outX + 4}" cy="40" r="4"/>`;
+  return s;
+}
+
+const GATE_SYMBOLS = {
+  and:  () => svgWrap(`<path class="sym-fill" d="${AND_D}"/>` + ioLines(2, 92, false)),
+  or:   () => svgWrap(`<path class="sym-fill" d="${OR_D}"/>` + ioLines(2, 96, false)),
+  not:  () => svgWrap(`<path class="sym-fill" d="M14,10 L14,70 L74,40 Z"/>` +
+                       `<circle class="sym-bubble" cx="82" cy="40" r="6"/>` + ioLines(1, 88, false)),
+  nand: () => svgWrap(`<path class="sym-fill" d="${AND_D}"/>` + ioLines(2, 92, true)),
+  nor:  () => svgWrap(`<path class="sym-fill" d="${OR_D}"/>` + ioLines(2, 96, true)),
+  xor:  () => svgWrap(`<path class="sym-fill" d="${OR_D}"/><path class="sym-line" d="${XOR_EXTRA_D}"/>` + ioLines(2, 96, false)),
+};
+
+// Small icon variant (compact, no labels) for law cards
+function gateIcon(type) {
+  const paths = {
+    and: `<path class="sym-fill" d="${AND_D}"/>`,
+    or: `<path class="sym-fill" d="${OR_D}"/>`,
+    not: `<path class="sym-fill" d="M14,10 L14,70 L74,40 Z"/><circle class="sym-bubble" cx="82" cy="40" r="6"/>`,
+    nand: `<path class="sym-fill" d="${AND_D}"/><circle class="sym-bubble" cx="96" cy="40" r="4"/>`,
+    nor: `<path class="sym-fill" d="${OR_D}"/><circle class="sym-bubble" cx="100" cy="40" r="4"/>`,
+    xor: `<path class="sym-fill" d="${OR_D}"/><path class="sym-line" d="${XOR_EXTRA_D}"/>`,
+  };
+  return `<svg viewBox="0 0 110 80" xmlns="http://www.w3.org/2000/svg">${paths[type]}</svg>`;
+}
+
+// ---------------- IC DIP-14 package diagram ----------------
+function icPackageSVG(part, pinLabels) {
+  const w = 300, h = 150;
+  const pinW = 16, pinH = 14;
+  const bodyX = 40, bodyY = 20, bodyW = 220, bodyH = 90;
+  let s = `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">`;
+  s += `<rect x="${bodyX}" y="${bodyY}" width="${bodyW}" height="${bodyH}" rx="4" class="sym-fill"/>`;
+  s += `<path d="M${bodyX + bodyW / 2 - 12},${bodyY} a12,12 0 0 0 24,0" class="sym-fill"/>`;
+  // top pins 14..8 left to right, bottom pins 1..7 left to right
+  const topNums = [14, 13, 12, 11, 10, 9, 8];
+  const bottomNums = [1, 2, 3, 4, 5, 6, 7];
+  const step = bodyW / 7;
+  topNums.forEach((n, i) => {
+    const cx = bodyX + step * i + step / 2;
+    s += `<rect x="${cx - pinW / 2}" y="${bodyY - pinH}" width="${pinW}" height="${pinH}" class="sym-fill"/>`;
+    s += `<text x="${cx}" y="${bodyY - pinH - 4}" font-size="8" text-anchor="middle">${n}</text>`;
+    s += `<text x="${cx}" y="${bodyY + 14}" font-size="7.5" text-anchor="middle">${pinLabels[n - 1]}</text>`;
+  });
+  bottomNums.forEach((n, i) => {
+    const cx = bodyX + step * i + step / 2;
+    s += `<rect x="${cx - pinW / 2}" y="${bodyY + bodyH}" width="${pinW}" height="${pinH}" class="sym-fill"/>`;
+    s += `<text x="${cx}" y="${bodyY + bodyH + pinH + 12}" font-size="8" text-anchor="middle">${n}</text>`;
+    s += `<text x="${cx}" y="${bodyY + bodyH - 6}" font-size="7.5" text-anchor="middle">${pinLabels[n - 1]}</text>`;
+  });
+  s += `<text x="${bodyX + bodyW / 2}" y="${bodyY + bodyH / 2 + 4}" font-size="11" text-anchor="middle" font-weight="600">${part}</text>`;
+  s += `</svg>`;
+  return s;
+}
+// ============================================================
+// Data model: gates (1a/1b) and Boolean-algebra laws (1c)
+// Laws are now expressed as small trees so the SAME structure
+// drives both truth-table evaluation and the LHS/RHS circuit
+// diagrams (see circuit.js).
+// ============================================================
+
+const P_AND_LIKE = ["1A","1B","1Y","2A","2B","2Y","GND","3Y","3A","3B","4Y","4A","4B","VCC"];
+const P_NOT      = ["1A","1Y","2A","2Y","3A","3Y","GND","4Y","4A","5Y","5A","6Y","6A","VCC"];
+const P_NOR      = ["1Y","1A","1B","2Y","2A","2B","GND","3B","3A","3Y","4B","4A","4Y","VCC"];
+
+const GATES_1A = [
+  { id:"and", name:"AND Gate", ic:"IC 7408", pins:P_AND_LIKE, inputs:2, expr:"Y = A · B", fn:(a,b)=> a && b, sym:"and" },
+  { id:"or",  name:"OR Gate",  ic:"IC 7432", pins:P_AND_LIKE, inputs:2, expr:"Y = A + B", fn:(a,b)=> a || b, sym:"or" },
+  { id:"not", name:"NOT Gate", ic:"IC 7404", pins:P_NOT,      inputs:1, expr:"Y = A'",     fn:(a)=> !a,        sym:"not" },
+];
+
+const GATES_1B = [
+  { id:"nand", name:"NAND Gate", ic:"IC 7400", pins:P_AND_LIKE, inputs:2, expr:"Y = (A · B)'", fn:(a,b)=> !(a&&b), sym:"nand" },
+  { id:"nor",  name:"NOR Gate",  ic:"IC 7402", pins:P_NOR,      inputs:2, expr:"Y = (A + B)'", fn:(a,b)=> !(a||b), sym:"nor" },
+  { id:"xor",  name:"XOR Gate",  ic:"IC 7486", pins:P_AND_LIKE, inputs:2, expr:"Y = A ⊕ B",     fn:(a,b)=> a !== b, sym:"xor" },
+];
+
+// ---- tiny expression-tree builders ----
+const V   = (name) => ({ type:"VAR", name });
+const NOT = (arg)  => ({ type:"NOT", arg });
+const AND = (...args) => ({ type:"AND", args });
+const OR  = (...args) => ({ type:"OR", args });
+
+function evalTree(node, vals) {
+  switch (node.type) {
+    case "VAR": return !!vals[node.name];
+    case "NOT": return !evalTree(node.arg, vals);
+    case "AND": return node.args.every(a => evalTree(a, vals));
+    case "OR":  return node.args.some(a => evalTree(a, vals));
+  }
+}
+
+const LAWS = [
+  { id:"demorgan-a", group:"De Morgan's Theorem", vars:["A","B"],
+    lhsLabel:"(A · B)'", rhsLabel:"A' + B'",
+    lhsTree: NOT(AND(V("A"), V("B"))),
+    rhsTree: OR(NOT(V("A")), NOT(V("B"))) },
+
+  { id:"demorgan-b", group:"De Morgan's Theorem", vars:["A","B"],
+    lhsLabel:"(A + B)'", rhsLabel:"A' · B'",
+    lhsTree: NOT(OR(V("A"), V("B"))),
+    rhsTree: AND(NOT(V("A")), NOT(V("B"))) },
+
+  { id:"assoc-a", group:"Associative Law", vars:["A","B","C"],
+    lhsLabel:"A + (B + C)", rhsLabel:"(A + B) + C",
+    lhsTree: OR(V("A"), OR(V("B"), V("C"))),
+    rhsTree: OR(OR(V("A"), V("B")), V("C")) },
+
+  { id:"assoc-b", group:"Associative Law", vars:["A","B","C"],
+    lhsLabel:"A · (B · C)", rhsLabel:"(A · B) · C",
+    lhsTree: AND(V("A"), AND(V("B"), V("C"))),
+    rhsTree: AND(AND(V("A"), V("B")), V("C")) },
+
+  { id:"distributive", group:"Distributive Law", vars:["A","B","C"],
+    lhsLabel:"A · (B + C)", rhsLabel:"AB + AC",
+    lhsTree: AND(V("A"), OR(V("B"), V("C"))),
+    rhsTree: OR(AND(V("A"), V("B")), AND(V("A"), V("C"))) },
+
+  { id:"commutative-a", group:"Commutative Law", vars:["A","B"],
+    lhsLabel:"A · B", rhsLabel:"B · A",
+    lhsTree: AND(V("A"), V("B")),
+    rhsTree: AND(V("B"), V("A")) },
+
+  { id:"commutative-b", group:"Commutative Law", vars:["A","B"],
+    lhsLabel:"A + B", rhsLabel:"B + A",
+    lhsTree: OR(V("A"), V("B")),
+    rhsTree: OR(V("B"), V("A")) },
+
+  { id:"consensus-a", group:"Consensus Law", vars:["A","B","C"],
+    lhsLabel:"AB + A'C + BC", rhsLabel:"AB + A'C",
+    lhsTree: OR(AND(V("A"), V("B")), AND(NOT(V("A")), V("C")), AND(V("B"), V("C"))),
+    rhsTree: OR(AND(V("A"), V("B")), AND(NOT(V("A")), V("C"))) },
+
+  { id:"consensus-b", group:"Consensus Law", vars:["A","B","C"],
+    lhsLabel:"(A+B)(A'+C)(B+C)", rhsLabel:"(A+B)(A'+C)",
+    lhsTree: AND(OR(V("A"), V("B")), OR(NOT(V("A")), V("C")), OR(V("B"), V("C"))),
+    rhsTree: AND(OR(V("A"), V("B")), OR(NOT(V("A")), V("C"))) },
+
+  { id:"involution", group:"Involution Law", vars:["A"],
+    lhsLabel:"A", rhsLabel:"(A')'",
+    lhsTree: V("A"),
+    rhsTree: NOT(NOT(V("A"))) },
+
+  { id:"idempotent-or", group:"Idempotent Law", vars:["A"],
+    lhsLabel:"A + A", rhsLabel:"A",
+    lhsTree: OR(V("A"), V("A")),
+    rhsTree: V("A") },
+
+  { id:"idempotent-and", group:"Idempotent Law", vars:["A"],
+    lhsLabel:"A · A", rhsLabel:"A",
+    lhsTree: AND(V("A"), V("A")),
+    rhsTree: V("A") },
+];
+
+LAWS.forEach(law => {
+  law.lhs = (v) => evalTree(law.lhsTree, v);
+  law.rhs = (v) => evalTree(law.rhsTree, v);
+});
+// ============================================================
+// Circuit diagram renderer — lays out an expression tree as a
+// small left-to-right schematic (leaves at left, output at right)
+// with Manhattan-routed wires between gates.
+// ============================================================
+
+const ROW_H = 30, GATE_STEP = 78, MARGIN_X = 10, MARGIN_Y = 12;
+
+function layoutTree(root) {
+  let leafIndex = 0;
+
+  function place(n) {
+    if (n.type === "VAR") {
+      const y = MARGIN_Y + leafIndex * ROW_H + ROW_H / 2;
+      leafIndex++;
+      return { node: n, x: MARGIN_X, y, outX: MARGIN_X, outY: y, depth: 0, isLeaf: true };
+    }
+    if (n.type === "NOT") {
+      const child = place(n.arg);
+      const depth = child.depth + 1;
+      const x = MARGIN_X + depth * GATE_STEP;
+      const w = 40, h = 30;
+      return { node: n, x, y: child.outY, outX: x + w, outY: child.outY, depth, children: [child], w, h };
+    }
+    // AND / OR (nary)
+    const children = n.args.map(place);
+    const depth = Math.max(...children.map(c => c.depth)) + 1;
+    const x = MARGIN_X + depth * GATE_STEP;
+    const y = children.reduce((s, c) => s + c.outY, 0) / children.length;
+    const nIn = children.length;
+    const w = nIn >= 3 ? 58 : 54;
+    const h = nIn >= 3 ? 66 : 44;
+    return { node: n, x, y, outX: x + w, outY: y, depth, children, w, h, nIn };
+  }
+
+  const root2 = place(root);
+  const totalLeaves = leafIndex;
+  const width = root2.outX + 26;
+  const height = Math.max(totalLeaves * ROW_H + MARGIN_Y * 2, root2.y + ROW_H);
+  return { root: root2, width, height };
+}
+
+function inputYFor(n, i) {
+  const nIn = n.children.length;
+  if (nIn === 2) return n.y + (i === 0 ? -h2Offset(n) : h2Offset(n));
+  if (nIn === 3) return n.y + (i - 1) * (n.h / 2.6);
+  return n.y;
+}
+function h2Offset(n) { return n.h / 3.1; }
+
+function wireElbow(sx, sy, tx, ty) {
+  if (Math.abs(sy - ty) < 0.5) return `<path class="wire" d="M${sx},${sy} H${tx}"/>`;
+  const midX = tx - 12;
+  return `<path class="wire" d="M${sx},${sy} H${midX} V${ty} H${tx}"/>`;
+}
+
+function andGateSVG(x, y, w, h) {
+  const top = y - h / 2, r = h / 2, rightFlatX = x + w - r;
+  const d = `M${x},${top} H${rightFlatX} A${r},${r} 0 0 1 ${rightFlatX},${top + h} H${x} Z`;
+  return `<path class="sym-fill" d="${d}"/>`;
+}
+function orGateSVG(x, y, w, h) {
+  const top = y - h / 2, bot = y + h / 2;
+  const d = `M${x},${top} C${x + w * 0.55},${top} ${x + w * 0.9},${y - h * 0.22} ${x + w},${y} ` +
+            `C${x + w * 0.9},${y + h * 0.22} ${x + w * 0.55},${bot} ${x},${bot} ` +
+            `C${x + w * 0.18},${y + h * 0.32} ${x + w * 0.18},${y - h * 0.32} ${x},${top} Z`;
+  return `<path class="sym-fill" d="${d}"/>`;
+}
+function notGateSVG(x, y, w, h) {
+  const top = y - h / 2, bot = y + h / 2, tipX = x + w - 8;
+  return `<path class="sym-fill" d="M${x},${top} L${x},${bot} L${tipX},${y} Z"/>` +
+         `<circle class="sym-bubble" cx="${x + w - 4}" cy="${y}" r="4"/>`;
+}
+
+function drawNode(n, parts) {
+  if (n.node.type === "VAR") {
+    parts.push(`<text x="${n.x - 6}" y="${n.y + 4}" font-size="12" text-anchor="end" class="lbl-var">${n.node.name}</text>`);
+    parts.push(`<circle cx="${n.x}" cy="${n.y}" r="1.6" class="node-dot"/>`);
+    return;
+  }
+  if (n.node.type === "NOT") {
+    const c = n.children[0];
+    drawNode(c, parts);
+    parts.push(wireElbow(c.outX, c.outY, n.x, n.y));
+    parts.push(notGateSVG(n.x, n.y, n.w, n.h));
+    return;
+  }
+  n.children.forEach((c, i) => {
+    drawNode(c, parts);
+    const inY = inputYFor(n, i);
+    parts.push(wireElbow(c.outX, c.outY, n.x, inY));
+  });
+  parts.push(n.node.type === "AND" ? andGateSVG(n.x, n.y, n.w, n.h) : orGateSVG(n.x, n.y, n.w, n.h));
+}
+
+function circuitSVG(tree, label) {
+  const { root, width, height } = layoutTree(tree);
+  const parts = [];
+  drawNode(root, parts);
+  // final output stub + label
+  parts.push(`<path class="wire" d="M${root.outX},${root.outY} H${root.outX + 20}"/>`);
+  parts.push(`<text x="${root.outX + 24}" y="${root.outY + 4}" font-size="12" class="lbl-var">Y</text>`);
+  const w = width + 26, h = Math.max(height, 60);
+  return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMid meet">${parts.join("")}</svg>`;
+}
+// ============================================================
+// Rendering + interactivity
+// ============================================================
+
+function combos(vars) {
+  const n = vars.length, rows = [];
+  for (let i = 0; i < (1 << n); i++) {
+    const row = {};
+    vars.forEach((v, idx) => { row[v] = !!((i >> (n - 1 - idx)) & 1); });
+    rows.push(row);
+  }
+  return rows;
+}
+const b2 = (b) => (b ? 1 : 0);
+
+// ---------------- Gate cards (1a / 1b) ----------------
+function renderGateCard(gate) {
+  const rows = combos(gate.inputs === 1 ? ["A"] : ["A", "B"]);
+  const headCols = gate.inputs === 1 ? ["A"] : ["A", "B"];
+
+  const tableHTML = `
+    <div class="tt-wrap"><table class="truth" data-gate="${gate.id}">
+      <thead><tr>${headCols.map(c=>`<th>${c}</th>`).join("")}<th>Y</th></tr></thead>
+      <tbody>
+        ${rows.map((r,i) => {
+          const y = gate.inputs===1 ? gate.fn(r.A) : gate.fn(r.A, r.B);
+          return `<tr data-idx="${i}">${headCols.map(c=>`<td>${b2(r[c])}</td>`).join("")}<td class="col-out">${b2(y)}</td></tr>`;
+        }).join("")}
+      </tbody>
+    </table></div>`;
+
+  const togglesHTML = gate.inputs === 1
+    ? `<div class="io-toggle"><span class="io-label">A</span><button class="switch" data-var="A" aria-pressed="false"></button></div>`
+    : `<div class="io-toggle"><span class="io-label">A</span><button class="switch" data-var="A" aria-pressed="false"></button></div>
+       <div class="io-toggle"><span class="io-label">B</span><button class="switch" data-var="B" aria-pressed="false"></button></div>`;
+
+  const card = document.createElement("div");
+  card.className = "g-card";
+  card.innerHTML = `
+    <div class="g-head">
+      <h3>${gate.name}</h3>
+      <span class="ic-badge">${gate.ic}</span>
+    </div>
+    <div class="g-body">
+      <div class="g-visuals">
+        <div class="visual-box"><div class="lbl">IEEE / ANSI Symbol</div>${GATE_SYMBOLS[gate.sym]()}</div>
+        <div class="visual-box"><div class="lbl">IC Pin Diagram</div>${icPackageSVG(gate.ic.replace("IC ",""), gate.pins)}</div>
+        <div class="expr-line">${gate.expr}</div>
+      </div>
+      <div class="g-sim">
+        <div class="sim-controls">${togglesHTML}
+          <div class="output-readout">
+            <div class="led" data-led></div>
+            <div class="led-label">Y = <b data-yval>0</b></div>
+          </div>
+        </div>
+        ${tableHTML}
+      </div>
+    </div>`;
+
+  const state = { A: false, B: false };
+  const led = card.querySelector("[data-led]");
+  const yval = card.querySelector("[data-yval]");
+  const switches = card.querySelectorAll(".switch");
+
+  function update() {
+    const y = gate.inputs === 1 ? gate.fn(state.A) : gate.fn(state.A, state.B);
+    led.classList.toggle("on", y);
+    yval.textContent = b2(y);
+    const idx = gate.inputs === 1 ? b2(state.A) : b2(state.A) * 2 + b2(state.B);
+    card.querySelectorAll("table.truth tbody tr").forEach((tr) => {
+      tr.classList.toggle("active-row", Number(tr.dataset.idx) === idx);
+    });
+  }
+
+  switches.forEach((sw) => {
+    sw.addEventListener("click", () => {
+      const v = sw.dataset.var;
+      state[v] = !state[v];
+      sw.classList.toggle("on", state[v]);
+      sw.setAttribute("aria-pressed", String(state[v]));
+      update();
+    });
+  });
+
+  update();
+  return card;
+}
+
+// ---------------- Law cards (1c) ----------------
+function renderLawCard(law) {
+  const rows = combos(law.vars);
+  const tableHTML = `
+    <div class="tt-wrap"><table class="truth" data-law="${law.id}">
+      <thead><tr>${law.vars.map(v=>`<th>${v}</th>`).join("")}<th>${law.lhsLabel}</th><th>${law.rhsLabel}</th></tr></thead>
+      <tbody>
+        ${rows.map((r,i) => {
+          const l = law.lhs(r), rr = law.rhs(r);
+          return `<tr data-idx="${i}">${law.vars.map(v=>`<td>${b2(r[v])}</td>`).join("")}<td class="col-lhs">${b2(l)}</td><td class="col-rhs">${b2(rr)}</td></tr>`;
+        }).join("")}
+      </tbody>
+    </table></div>`;
+
+  const togglesHTML = law.vars.map(v =>
+    `<div class="io-toggle"><span class="io-label">${v}</span><button class="switch" data-var="${v}" aria-pressed="false"></button></div>`
+  ).join("");
+
+  const card = document.createElement("div");
+  card.className = "law-card";
+  const uid = law.id;
+  card.innerHTML = `
+    <div class="law-head">
+      <span class="lname">${law.group}</span>
+      <h3>${law.lhsLabel} = ${law.rhsLabel}</h3>
+    </div>
+    <div class="law-diagrams">
+      <div class="diagram-box">
+        <div class="lbl">L.H.S &middot; ${law.lhsLabel}</div>
+        <div class="diagram-scroll">${circuitSVG(law.lhsTree, "Y")}</div>
+      </div>
+      <div class="diagram-box">
+        <div class="lbl">R.H.S &middot; ${law.rhsLabel}</div>
+        <div class="diagram-scroll">${circuitSVG(law.rhsTree, "Y")}</div>
+      </div>
+    </div>
+    <div class="law-sim">
+      <div class="law-toggles">${togglesHTML}</div>
+      <div class="law-readout">
+        <div class="lamp-pair"><div class="led" data-led-lhs></div><span class="lamp-name">LHS</span></div>
+        <div class="lamp-pair"><div class="led" data-led-rhs></div><span class="lamp-name">RHS</span></div>
+        <span class="match-badge" data-badge>Equal</span>
+      </div>
+    </div>
+    <button class="law-table-toggle" data-tbl-toggle="${uid}">Show full truth table ▾</button>
+    <div class="law-table" id="tbl-${uid}">${tableHTML}</div>
+  `;
+
+  const state = {};
+  law.vars.forEach(v => state[v] = false);
+  const ledL = card.querySelector("[data-led-lhs]");
+  const ledR = card.querySelector("[data-led-rhs]");
+  const badge = card.querySelector("[data-badge]");
+  const switches = card.querySelectorAll(".switch");
+
+  function update() {
+    const l = law.lhs(state), r = law.rhs(state);
+    ledL.classList.toggle("on", l);
+    ledR.classList.toggle("on", r);
+    badge.textContent = l === r ? "Equal ✓" : "Mismatch";
+    badge.style.color = l === r ? "var(--accent)" : "var(--bad)";
+    let idx = 0;
+    law.vars.forEach((v, i) => { idx = idx * 2 + b2(state[v]); });
+    card.querySelectorAll("table.truth tbody tr").forEach((tr) => {
+      tr.classList.toggle("active-row", Number(tr.dataset.idx) === idx);
+    });
+  }
+
+  switches.forEach((sw) => {
+    sw.addEventListener("click", () => {
+      const v = sw.dataset.var;
+      state[v] = !state[v];
+      sw.classList.toggle("on", state[v]);
+      sw.setAttribute("aria-pressed", String(state[v]));
+      update();
+    });
+  });
+
+  card.querySelector("[data-tbl-toggle]").addEventListener("click", (e) => {
+    const t = card.querySelector(`#tbl-${uid}`);
+    t.classList.toggle("open");
+    e.target.textContent = t.classList.contains("open") ? "Hide full truth table ▴" : "Show full truth table ▾";
+  });
+
+  update();
+  return card;
+}
+
+// ---------------- Mount ----------------
+function mount() {
+  const g1a = document.getElementById("gates1a");
+  const g1b = document.getElementById("gates1b");
+  const lc = document.getElementById("lawsContainer");
+  GATES_1A.forEach(g => g1a.appendChild(renderGateCard(g)));
+  GATES_1B.forEach(g => g1b.appendChild(renderGateCard(g)));
+  LAWS.forEach(l => lc.appendChild(renderLawCard(l)));
+
+  // scroll reveal
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(en => { if (en.isIntersecting) { en.target.classList.add("in-view"); io.unobserve(en.target); } });
+  }, { threshold: 0.1, rootMargin: "0px 0px -30px 0px" });
+  document.querySelectorAll(".g-card, .law-card").forEach((el, i) => {
+    el.style.transitionDelay = Math.min((i % 6) * 60, 300) + "ms";
+    io.observe(el);
+  });
+}
+
+// ---------------- Theme toggle ----------------
+(function () {
+  const root = document.documentElement;
+  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
+  function applyTheme(t) {
+    root.setAttribute("data-theme", t);
+    const btn = document.querySelector(".theme-toggle");
+    if (btn) btn.setAttribute("aria-pressed", t === "dark");
+  }
+  applyTheme(prefersDark.matches ? "dark" : "light");
+  prefersDark.addEventListener("change", (e) => applyTheme(e.matches ? "dark" : "light"));
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest(".theme-toggle");
+    if (!btn) return;
+    applyTheme(root.getAttribute("data-theme") === "dark" ? "light" : "dark");
+  });
+})();
+
+// ---------------- Reading progress ----------------
+(function () {
+  const fill = document.getElementById("progressFill");
+  if (!fill) return;
+  function update() {
+    const h = document.documentElement;
+    const scrollable = h.scrollHeight - h.clientHeight;
+    fill.style.width = (scrollable > 0 ? (h.scrollTop / scrollable) * 100 : 0) + "%";
+  }
+  update();
+  document.addEventListener("scroll", update, { passive: true });
+  window.addEventListener("resize", update);
+})();
+
+// ---------------- Tabs ----------------
+(function () {
+  const btns = document.querySelectorAll(".tab-btn");
+  const panels = document.querySelectorAll(".tab-panel");
+  btns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      btns.forEach(b => b.classList.remove("active"));
+      panels.forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById(btn.dataset.target).classList.add("active");
+      window.scrollTo({ top: document.querySelector(".tabbar").offsetTop - 4, behavior: "smooth" });
+    });
+  });
+})();
+
+document.addEventListener("DOMContentLoaded", mount);
+
+</script>
+</body>
+</html>

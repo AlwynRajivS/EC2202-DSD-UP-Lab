@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Burglar Alarm — Digital Logic Design</title>
+<style>
+:root{
+  --bg:#0A0E13;
+  --panel:#101720;
+  --panel-2:#141D28;
+  --line:#213040;
+  --text:#E7EEF4;
+  --text-dim:#8CA0B3;
+  --cyan:#4FD8EE;
+  --amber:#FFB020;
+  --red:#FF3B30;
+  --green:#33D17A;
+  --mono: 'JetBrains Mono', 'Courier New', monospace;
+  --sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --radius: 14px;
+  --shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+[data-theme="light"]{
+  --bg:#EEF2F5;
+  --panel:#FFFFFF;
+  --panel-2:#F5F8FA;
+  --line:#DCE4EA;
+  --text:#132030;
+  --text-dim:#5B6E80;
+  --cyan:#0891A8;
+  --amber:#C97600;
+  --red:#D6291B;
+  --green:#1C9A5B;
+  --shadow: 0 20px 50px rgba(20,40,60,0.10);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--sans);
+  transition:background .4s ease, color .4s ease;
+  overflow-x:hidden;
+}
+body::before{
+  content:"";
+  position:fixed; inset:0;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 42px 42px;
+  opacity:.35;
+  pointer-events:none;
+  z-index:0;
+}
+.wrap{ max-width:1080px; margin:0 auto; padding:0 24px; position:relative; z-index:1;}
+
+/* ---------- top bar ---------- */
+.topbar{
+  position:sticky; top:0; z-index:50;
+  backdrop-filter: blur(14px);
+  background:color-mix(in srgb, var(--bg) 80%, transparent);
+  border-bottom:1px solid var(--line);
+}
+.topbar-inner{
+  max-width:1080px; margin:0 auto; padding:14px 24px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.brand{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-weight:700; letter-spacing:.5px; font-size:14px;}
+.brand .dot{ width:9px; height:9px; border-radius:50%; background:var(--red); box-shadow:0 0 12px var(--red); animation:blink 1.6s infinite;}
+@keyframes blink{ 0%,100%{opacity:1} 50%{opacity:.25} }
+.theme-toggle{
+  display:flex; align-items:center; gap:8px;
+  background:var(--panel-2); border:1px solid var(--line);
+  border-radius:999px; padding:6px 6px; cursor:pointer;
+  font-family:var(--mono); font-size:12px; color:var(--text-dim);
+}
+.theme-toggle button{
+  border:none; background:transparent; color:inherit; font-family:inherit; font-size:12px;
+  padding:6px 12px; border-radius:999px; cursor:pointer; transition:.25s;
+}
+.theme-toggle button.active{ background:var(--cyan); color:#04141a; font-weight:700;}
+
+/* ---------- hero ---------- */
+.hero{ padding:64px 0 40px; }
+.eyebrow{ font-family:var(--mono); font-size:12px; letter-spacing:3px; color:var(--amber); text-transform:uppercase; margin-bottom:14px;}
+h1{ font-size:clamp(32px,5.5vw,54px); line-height:1.05; font-weight:800; letter-spacing:-0.02em; margin-bottom:16px;}
+h1 span{ color:var(--cyan);}
+.lede{ color:var(--text-dim); font-size:17px; max-width:640px; line-height:1.6; margin-bottom:36px;}
+
+/* ---------- control panel (signature element) ---------- */
+.panel{
+  background:linear-gradient(180deg, var(--panel), var(--panel-2));
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:28px;
+  margin-bottom:28px;
+}
+.panel-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; flex-wrap:wrap; gap:12px;}
+.panel-title{ font-family:var(--mono); font-size:13px; letter-spacing:2px; color:var(--text-dim); text-transform:uppercase;}
+.status-badge{
+  font-family:var(--mono); font-size:13px; font-weight:700; padding:8px 16px; border-radius:999px;
+  border:1px solid var(--line); display:flex; align-items:center; gap:8px; transition:.3s;
+}
+.status-badge .led{ width:8px; height:8px; border-radius:50%; background:var(--text-dim); transition:.3s;}
+.status-badge.armed{ color:var(--amber); border-color:var(--amber);}
+.status-badge.armed .led{ background:var(--amber); box-shadow:0 0 10px var(--amber);}
+.status-badge.alarm{ color:var(--red); border-color:var(--red); animation:pulseBorder 1s infinite;}
+.status-badge.alarm .led{ background:var(--red); box-shadow:0 0 12px var(--red); animation:blink .5s infinite;}
+@keyframes pulseBorder{ 0%,100%{box-shadow:0 0 0 rgba(255,59,48,0)} 50%{box-shadow:0 0 22px rgba(255,59,48,.35)} }
+
+.switches{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:26px;}
+.switch-card{
+  background:var(--bg); border:1px solid var(--line); border-radius:10px;
+  padding:16px; text-align:center; cursor:pointer; user-select:none;
+  transition:border-color .2s, transform .15s;
+}
+.switch-card:hover{ transform:translateY(-2px); border-color:var(--cyan);}
+.switch-card:active{ transform:translateY(0);}
+.switch-card .label{ font-family:var(--mono); font-size:11px; letter-spacing:2px; color:var(--text-dim); margin-bottom:4px;}
+.switch-card .name{ font-size:13px; color:var(--text-dim); margin-bottom:12px;}
+.toggle{
+  width:52px; height:28px; border-radius:999px; background:var(--line); margin:0 auto;
+  position:relative; transition:background .25s;
+}
+.toggle::after{
+  content:""; position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:50%;
+  background:var(--text-dim); transition:.25s; box-shadow:0 2px 6px rgba(0,0,0,.3);
+}
+.switch-card[data-on="true"] .toggle{ background:var(--cyan);}
+.switch-card[data-on="true"] .toggle::after{ transform:translateX(24px); background:#04141a;}
+.switch-card .val{ font-family:var(--mono); font-size:20px; font-weight:700; margin-top:10px; color:var(--text);}
+
+/* SVG circuit */
+.circuit-box{
+  background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:12px;
+  overflow-x:auto; -webkit-overflow-scrolling:touch;
+  min-width:0; max-width:100%;
+}
+svg{ display:block; width:100%; height:auto; min-width:560px;}
+.wire{ stroke:var(--line); stroke-width:3; fill:none; transition:stroke .25s;}
+.wire.live{ stroke:var(--cyan); filter:drop-shadow(0 0 4px var(--cyan));}
+.wire.hot{ stroke:var(--red); filter:drop-shadow(0 0 6px var(--red));}
+.gate{ fill:var(--panel-2); stroke:var(--line); stroke-width:2; stroke-linejoin:round; stroke-linecap:round; transition:stroke .25s;}
+.gate.active{ stroke:var(--cyan);}
+.gate-label{ font-family:var(--mono); font-size:12px; fill:var(--text-dim);}
+.pin-label{ font-family:var(--mono); font-size:13px; fill:var(--text); font-weight:700;}
+.node{ fill:var(--line); transition:fill .25s;}
+.node.live{ fill:var(--cyan);}
+.node.hot{ fill:var(--red);}
+.siren{ transform-origin:center; }
+.siren.active{ animation:spin 1.1s linear infinite;}
+@keyframes spin{ to{ transform:rotate(360deg);} }
+
+/* ---------- section shared ---------- */
+section{ padding:52px 0; border-top:1px solid var(--line);}
+.section-head{ display:flex; align-items:baseline; gap:14px; margin-bottom:8px; flex-wrap:wrap;}
+.section-num{ font-family:var(--mono); color:var(--cyan); font-size:14px; font-weight:700;}
+h2{ font-size:clamp(22px,3.2vw,30px); font-weight:800; letter-spacing:-0.01em;}
+.section-sub{ color:var(--text-dim); font-size:15px; max-width:680px; margin-bottom:30px; line-height:1.6;}
+
+/* steps */
+.steps{ display:flex; flex-direction:column; gap:0;}
+.step{
+  display:grid; grid-template-columns:56px 1fr; gap:18px;
+  padding:20px 0; border-top:1px solid var(--line);
+}
+.step:first-child{ border-top:none;}
+.step-num{ font-family:var(--mono); font-size:22px; font-weight:800; color:var(--amber); opacity:.7;}
+.step h3{ font-size:16px; margin-bottom:6px;}
+.step p{ color:var(--text-dim); font-size:14.5px; line-height:1.6;}
+.step code{ font-family:var(--mono); background:var(--panel-2); padding:2px 7px; border-radius:5px; color:var(--cyan); font-size:13px;}
+
+/* table */
+.table-scroll{ overflow-x:auto; border:1px solid var(--line); border-radius:12px;}
+table{ width:100%; border-collapse:collapse; font-family:var(--mono); font-size:14px; min-width:480px;}
+thead th{
+  background:var(--panel-2); text-align:center; padding:14px 10px; font-size:12px; letter-spacing:1.5px;
+  color:var(--text-dim); text-transform:uppercase; border-bottom:1px solid var(--line);
+}
+tbody td{ text-align:center; padding:12px 10px; border-bottom:1px solid var(--line); color:var(--text);}
+tbody tr:last-child td{ border-bottom:none;}
+tbody tr:hover{ background:var(--panel-2);}
+td.one{ color:var(--green); font-weight:800;}
+td.zero{ color:var(--text-dim);}
+tr.alarm-row td.result{ color:var(--red); font-weight:800;}
+tr.alarm-row{ background:color-mix(in srgb, var(--red) 6%, transparent);}
+
+/* kmap */
+.kmap-wrap{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,260px); gap:32px; align-items:start;}
+.kmap-grid rect, .kmap-grid line{ stroke:var(--line); }
+.kmap-text{ font-family:var(--mono); font-size:22px; fill:var(--text); font-weight:700; }
+.kmap-text.dim{ fill:var(--text-dim); font-size:14px; font-weight:600; }
+.kmap-text.zero{ fill:var(--text-dim); font-weight:600; }
+.kmap-text.one{ fill:var(--green); font-weight:800; }
+.groups-legend{ display:flex; flex-direction:column; gap:10px; font-family:var(--mono); font-size:13.5px; min-width:0;}
+.groups-legend .g{ display:flex; align-items:flex-start; gap:10px; line-height:1.5;}
+.swatch{ width:16px; height:16px; border-radius:4px; flex-shrink:0; margin-top:2px;}
+.scroll-hint{ display:none; font-family:var(--mono); font-size:11px; color:var(--text-dim); margin-top:8px; letter-spacing:.5px;}
+.circuit-box::-webkit-scrollbar{ height:8px; }
+.circuit-box::-webkit-scrollbar-track{ background:var(--panel-2); border-radius:8px; }
+.circuit-box::-webkit-scrollbar-thumb{ background:var(--cyan); border-radius:8px; }
+
+/* boolean derivation */
+.derivation{
+  background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:24px 26px;
+  font-family:var(--mono); font-size:15px; line-height:2.1; overflow-x:auto;
+}
+.derivation .final{ color:var(--cyan); font-weight:800; font-size:17px; border-top:1px dashed var(--line); margin-top:10px; padding-top:14px; display:block;}
+
+/* footer */
+footer{ padding:40px 0 60px; text-align:center; color:var(--text-dim); font-family:var(--mono); font-size:12.5px;}
+
+@media (max-width:640px){
+  .switches{ grid-template-columns:1fr; }
+  .step{ grid-template-columns:40px 1fr; }
+  .kmap-wrap{ grid-template-columns:minmax(0,1fr); gap:18px; }
+  .scroll-hint{ display:block; }
+  .circuit-box svg, #logicSvg, #kmapSvg{ min-width:640px; }
+}
+</style>
+</head>
+<body data-theme="dark">
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand"><span class="dot"></span>SENTRY&nbsp;LOGIC</div>
+    <div class="theme-toggle">
+      <button id="btnDark" class="active">Dark</button>
+      <button id="btnLight">Light</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- HERO + SIMULATOR -->
+  <div class="hero">
+    <div class="eyebrow">Digital Logic Design · Case Study</div>
+    <h1>Designing a <span>Burglar Alarm</span><br>with combinational logic</h1>
+    <p class="lede">A house alarm should sound only when the system is <strong>armed</strong> and an intruder is caught by the <strong>window sensor</strong> or the <strong>motion detector</strong>. Below is the full design, from truth table to logic gates — plus a live circuit you can operate yourself.</p>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">Live Simulator</div>
+      <div class="status-badge" id="statusBadge"><span class="led"></span><span id="statusText">SYSTEM DISARMED</span></div>
+    </div>
+
+    <div class="switches">
+      <div class="switch-card" id="sw-SYS" data-on="false">
+        <div class="label">INPUT · SYS</div>
+        <div class="name">Alarm System Armed</div>
+        <div class="toggle"></div>
+        <div class="val" id="val-SYS">0</div>
+      </div>
+      <div class="switch-card" id="sw-WS" data-on="false">
+        <div class="label">INPUT · WS</div>
+        <div class="name">Window Sensor Triggered</div>
+        <div class="toggle"></div>
+        <div class="val" id="val-WS">0</div>
+      </div>
+      <div class="switch-card" id="sw-MD" data-on="false">
+        <div class="label">INPUT · MD</div>
+        <div class="name">Motion Detector Triggered</div>
+        <div class="toggle"></div>
+        <div class="val" id="val-MD">0</div>
+      </div>
+    </div>
+
+    <div class="circuit-box">
+      <svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg">
+        <!-- input pins -->
+        <text x="18" y="65" class="pin-label">WS</text>
+        <text x="18" y="165" class="pin-label">MD</text>
+        <text x="18" y="265" class="pin-label">SYS</text>
+
+        <!-- WS -> OR (top input) -->
+        <path id="w1" class="wire" d="M60,60 L230,60"/>
+        <!-- MD -> OR (bottom input) -->
+        <path id="w2" class="wire" d="M60,160 L200,160 L200,120 L230,120"/>
+
+        <!-- OR gate: standard IEEE shield shape, tip = output -->
+        <path id="orGate" class="gate" d="M230,40
+                 C 258,40 280,50 312,90
+                 C 280,130 258,140 230,140
+                 C 246,116 246,64 230,40 Z"/>
+        <text x="256" y="168" class="gate-label" text-anchor="middle">OR</text>
+
+        <!-- OR output -> AND top input -->
+        <path id="w3" class="wire" d="M312,90 L470,90 L470,155 L520,155"/>
+        <!-- SYS -> AND bottom input -->
+        <path id="w4" class="wire" d="M60,260 L470,260 L470,205 L520,205"/>
+
+        <!-- AND gate: standard IEEE D shape, flat back + semicircular front -->
+        <path id="andGate" class="gate" d="M520,140
+                 L555,140
+                 A40,40 0 0 1 555,220
+                 L520,220 Z"/>
+        <text x="537" y="238" class="gate-label" text-anchor="middle">AND</text>
+
+        <!-- AND output -> ALARM -->
+        <path id="w5" class="wire" d="M595,180 L680,180"/>
+        <circle id="siren" class="siren" cx="730" cy="180" r="34" fill="none" stroke="var(--line)" stroke-width="3"/>
+        <circle id="sirenCore" cx="730" cy="180" r="13" fill="var(--line)"/>
+        <path id="sirenSpark" d="M730,146 L730,138 M764,180 L772,180 M730,214 L730,222 M696,180 L688,180" class="wire" stroke="var(--line)"/>
+        <text x="700" y="238" class="gate-label">ALARM</text>
+
+        <!-- input nodes -->
+        <circle id="n1" class="node" cx="60" cy="60" r="5"/>
+        <circle id="n2" class="node" cx="60" cy="160" r="5"/>
+        <circle id="n3" class="node" cx="60" cy="260" r="5"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- STEP-BY-STEP CONCEPT -->
+  <section id="concept">
+    <div class="section-head"><span class="section-num">01</span><h2>How the design comes together</h2></div>
+    <p class="section-sub">This is a classic combinational logic problem — the output depends only on the present inputs, with no memory of past states.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div>
+          <h3>Identify the inputs and output</h3>
+          <p>Three binary inputs: <code>SYS</code> (system armed?), <code>WS</code> (window sensor tripped?), <code>MD</code> (motion detected?). One binary output: <code>ALARM</code> (siren on?). Each signal is either 0 (false / inactive) or 1 (true / active).</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div>
+          <h3>Translate the spec into a condition</h3>
+          <p>"Activated if an unauthorized person is detected by a window sensor <em>or</em> motion detector" → <code>WS OR MD</code>. "This has to happen only when the system is activated" → that OR result is only valid <code>AND SYS = 1</code>.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div>
+          <h3>Build the truth table</h3>
+          <p>List all 2³ = 8 combinations of SYS, WS, MD and evaluate ALARM for each — this gives us the ground truth to simplify against.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div>
+          <h3>Simplify with a Karnaugh map</h3>
+          <p>Plot the 1-outputs on a K-map and group adjacent 1s in powers of two to eliminate redundant variables and reach the minimal Boolean expression.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div>
+          <h3>Draw the logic diagram</h3>
+          <p>Convert the minimal expression directly into gates: one 2-input OR gate for the sensors, feeding one 2-input AND gate together with SYS.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRUTH TABLE -->
+  <section id="truthtable">
+    <div class="section-head"><span class="section-num">02</span><h2>Truth Table</h2></div>
+    <p class="section-sub">All eight combinations of SYS, WS and MD, with the resulting ALARM output.</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>#</th><th>SYS</th><th>WS</th><th>MD</th><th>ALARM</th></tr></thead>
+        <tbody id="ttBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- K-MAP -->
+  <section id="kmap">
+    <div class="section-head"><span class="section-num">03</span><h2>Karnaugh Map Simplification</h2></div>
+    <p class="section-sub">Rows = SYS, columns = WS·MD in Gray-code order, so adjacent cells differ by only one bit. The two colored loops show the pair-groupings used to simplify the expression.</p>
+    <div class="kmap-wrap">
+      <div style="min-width:0;">
+        <div class="circuit-box">
+          <svg id="kmapSvg" viewBox="0 0 520 200" xmlns="http://www.w3.org/2000/svg">
+            <!-- corner label -->
+            <text x="8" y="20" class="kmap-text dim" font-size="12">SYS \ WS·MD</text>
+
+            <!-- column headers -->
+            <text x="160" y="30" class="kmap-text dim" text-anchor="middle">00</text>
+            <text x="260" y="30" class="kmap-text dim" text-anchor="middle">01</text>
+            <text x="360" y="30" class="kmap-text dim" text-anchor="middle">11</text>
+            <text x="460" y="30" class="kmap-text dim" text-anchor="middle">10</text>
+
+            <!-- row headers -->
+            <text x="70" y="90" class="kmap-text dim" text-anchor="middle">0</text>
+            <text x="70" y="160" class="kmap-text dim" text-anchor="middle">1</text>
+
+            <!-- grid -->
+            <g class="kmap-grid">
+              <rect x="110" y="50" width="400" height="140" fill="none" stroke-width="2"/>
+              <line x1="210" y1="50" x2="210" y2="190" stroke-width="2"/>
+              <line x1="310" y1="50" x2="310" y2="190" stroke-width="2"/>
+              <line x1="410" y1="50" x2="410" y2="190" stroke-width="2"/>
+              <line x1="110" y1="120" x2="510" y2="120" stroke-width="2"/>
+            </g>
+
+            <!-- cell values: row SYS=0 -->
+            <text x="160" y="93" class="kmap-text zero" text-anchor="middle">0</text>
+            <text x="260" y="93" class="kmap-text zero" text-anchor="middle">0</text>
+            <text x="360" y="93" class="kmap-text zero" text-anchor="middle">0</text>
+            <text x="460" y="93" class="kmap-text zero" text-anchor="middle">0</text>
+
+            <!-- cell values: row SYS=1 -->
+            <text x="160" y="163" class="kmap-text zero" text-anchor="middle">0</text>
+            <text x="260" y="163" class="kmap-text one" text-anchor="middle">1</text>
+            <text x="360" y="163" class="kmap-text one" text-anchor="middle">1</text>
+            <text x="460" y="163" class="kmap-text one" text-anchor="middle">1</text>
+
+            <!-- Group A: SYS·WS -> columns 11,10 on row SYS=1 -->
+            <rect x="316" y="128" width="188" height="54" rx="16" ry="16"
+                  fill="none" stroke="var(--cyan)" stroke-width="4" stroke-dasharray="0"/>
+            <!-- Group B: SYS·MD -> columns 01,11 on row SYS=1 -->
+            <rect x="216" y="126" width="188" height="60" rx="16" ry="16"
+                  fill="none" stroke="var(--amber)" stroke-width="4" stroke-dasharray="9 6"/>
+          </svg>
+        </div>
+        <div class="scroll-hint">← swipe to see the full map →</div>
+      </div>
+      <div class="groups-legend">
+        <div class="g"><span class="swatch" style="background:var(--cyan)"></span> Group A (solid) → <strong>SYS·WS</strong> — pairs cells 11 and 10 in the SYS=1 row.</div>
+        <div class="g"><span class="swatch" style="background:var(--amber)"></span> Group B (dashed) → <strong>SYS·MD</strong> — pairs cells 01 and 11 in the SYS=1 row.</div>
+        <div class="g" style="color:var(--text-dim)">The cell at WS·MD=11 belongs to both loops — that overlap is allowed and expected.</div>
+        <div class="g" style="color:var(--text-dim)">Row SYS=0 is all zeros, so SYS appears in every group — it can never be simplified away.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BOOLEAN EXPRESSION -->
+  <section id="boolean">
+    <div class="section-head"><span class="section-num">04</span><h2>Boolean Expression Derivation</h2></div>
+    <p class="section-sub">Reading the two K-map groups and combining them (Sum of Products):</p>
+    <div class="derivation">
+<span>Group A (SYS·WS, MD don't-care):&nbsp; SYS·WS</span>
+<span>Group B (SYS·MD, WS don't-care):&nbsp; SYS·MD</span>
+<span>Sum of Products:&nbsp; ALARM = SYS·WS + SYS·MD</span>
+<span>Factor out common term SYS:&nbsp; ALARM = SYS·(WS + MD)</span>
+<span class="final">ALARM = SYS · (WS + MD)</span>
+    </div>
+  </section>
+
+  <!-- LOGIC DIAGRAM -->
+  <section id="logicdiagram">
+    <div class="section-head"><span class="section-num">05</span><h2>Logic Diagram</h2></div>
+    <p class="section-sub">Directly built from the simplified expression — a 2-input OR gate combines the sensors, then a 2-input AND gate gates that result with SYS. Toggle the switches in the simulator above to watch the signal travel through this exact circuit.</p>
+    <div class="circuit-box">
+      <svg id="logicSvg" viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg">
+        <text x="18" y="65" class="pin-label">WS</text>
+        <text x="18" y="165" class="pin-label">MD</text>
+        <text x="18" y="265" class="pin-label">SYS</text>
+
+        <path id="ld-w1" class="wire" d="M60,60 L230,60"/>
+        <path id="ld-w2" class="wire" d="M60,160 L200,160 L200,120 L230,120"/>
+
+        <path id="ld-orGate" class="gate" d="M230,40
+                 C 258,40 280,50 312,90
+                 C 280,130 258,140 230,140
+                 C 246,116 246,64 230,40 Z"/>
+        <text x="256" y="168" class="gate-label" text-anchor="middle">OR</text>
+
+        <path id="ld-w3" class="wire" d="M312,90 L470,90 L470,155 L520,155"/>
+        <path id="ld-w4" class="wire" d="M60,260 L470,260 L470,205 L520,205"/>
+
+        <path id="ld-andGate" class="gate" d="M520,140
+                 L555,140
+                 A40,40 0 0 1 555,220
+                 L520,220 Z"/>
+        <text x="537" y="238" class="gate-label" text-anchor="middle">AND</text>
+
+        <path id="ld-w5" class="wire" d="M595,180 L820,180"/>
+        <text id="ldAlarmLabel" x="826" y="185" class="pin-label">ALARM</text>
+
+        <circle id="ld-n1" class="node" cx="60" cy="60" r="5"/>
+        <circle id="ld-n2" class="node" cx="60" cy="160" r="5"/>
+        <circle id="ld-n3" class="node" cx="60" cy="260" r="5"/>
+      </svg>
+    </div>
+    <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-top:12px;">Standard IEEE/ANSI symbols: the curved shield is the <strong style="color:var(--text)">OR</strong> gate, the flat-back D-shape is the <strong style="color:var(--text)">AND</strong> gate. This diagram mirrors the simulator above one-to-one, and updates live with it.</p>
+  </section>
+
+  <footer>
+    ALARM = SYS · (WS + MD) &nbsp;·&nbsp; Built for digital logic design practice
+  </footer>
+</div>
+
+<script>
+const state = { SYS:false, WS:false, MD:false };
+
+function renderTruthTable(){
+  const body = document.getElementById('ttBody');
+  let rows = '';
+  for(let i=0;i<8;i++){
+    const s = (i>>2)&1, w=(i>>1)&1, m=i&1;
+    const alarm = s && (w || m) ? 1 : 0;
+    rows += `<tr class="${alarm? 'alarm-row':''}">
+      <td>${i}</td>
+      <td class="${s?'one':'zero'}">${s}</td>
+      <td class="${w?'one':'zero'}">${w}</td>
+      <td class="${m?'one':'zero'}">${m}</td>
+      <td class="result ${alarm?'one':'zero'}">${alarm}</td>
+    </tr>`;
+  }
+  body.innerHTML = rows;
+}
+renderTruthTable();
+
+function computeAlarm(){
+  return state.SYS && (state.WS || state.MD);
+}
+
+function updateSwitch(id){
+  const el = document.getElementById('sw-'+id);
+  el.dataset.on = state[id];
+  document.getElementById('val-'+id).textContent = state[id] ? '1' : '0';
+}
+
+function setWireClass(el, live, hot){
+  el.classList.remove('live','hot');
+  if(hot) el.classList.add('hot');
+  else if(live) el.classList.add('live');
+}
+
+function updateCircuit(){
+  const ws = state.WS, md = state.MD, sys = state.SYS;
+  const orOut = ws || md;
+  const alarm = sys && orOut;
+
+  setWireClass(document.getElementById('w1'), ws, false);
+  setWireClass(document.getElementById('w2'), md, false);
+  setWireClass(document.getElementById('n1'), ws, false);
+  setWireClass(document.getElementById('n2'), md, false);
+  setWireClass(document.getElementById('n3'), sys, false);
+
+  const orGate = document.getElementById('orGate');
+  orGate.classList.toggle('active', orOut);
+  setWireClass(document.getElementById('w3'), orOut, false);
+  setWireClass(document.getElementById('w4'), sys, false);
+
+  const andGate = document.getElementById('andGate');
+  andGate.classList.toggle('active', alarm);
+  setWireClass(document.getElementById('w5'), false, alarm);
+
+  const siren = document.getElementById('siren');
+  const sirenCore = document.getElementById('sirenCore');
+  const sirenSpark = document.getElementById('sirenSpark');
+  siren.style.stroke = alarm ? 'var(--red)' : 'var(--line)';
+  sirenCore.style.fill = alarm ? 'var(--red)' : 'var(--line)';
+  sirenSpark.style.stroke = alarm ? 'var(--red)' : 'var(--line)';
+  siren.classList.toggle('active', alarm);
+
+  // ---- mirror the exact same states onto the standalone Logic Diagram SVG ----
+  const ld = id => document.getElementById('ld-'+id);
+  setWireClass(ld('w1'), ws, false);
+  setWireClass(ld('w2'), md, false);
+  setWireClass(ld('n1'), ws, false);
+  setWireClass(ld('n2'), md, false);
+  setWireClass(ld('n3'), sys, false);
+
+  const ldOr = ld('orGate');
+  ldOr.classList.toggle('active', orOut);
+  setWireClass(ld('w3'), orOut, false);
+  setWireClass(ld('w4'), sys, false);
+
+  const ldAnd = ld('andGate');
+  ldAnd.classList.toggle('active', alarm);
+  setWireClass(ld('w5'), false, alarm);
+
+  const ldAlarmLabel = document.getElementById('ldAlarmLabel');
+  if(ldAlarmLabel) ldAlarmLabel.style.fill = alarm ? 'var(--red)' : 'var(--text)';
+
+  const badge = document.getElementById('statusBadge');
+  const text = document.getElementById('statusText');
+  badge.classList.remove('armed','alarm');
+  if(alarm){
+    badge.classList.add('alarm');
+    text.textContent = 'ALARM TRIGGERED';
+  } else if(sys){
+    badge.classList.add('armed');
+    text.textContent = 'SYSTEM ARMED — STANDBY';
+  } else {
+    text.textContent = 'SYSTEM DISARMED';
+  }
+}
+
+['SYS','WS','MD'].forEach(id=>{
+  document.getElementById('sw-'+id).addEventListener('click', ()=>{
+    state[id] = !state[id];
+    updateSwitch(id);
+    updateCircuit();
+  });
+});
+
+updateCircuit();
+
+// theme toggle
+const btnDark = document.getElementById('btnDark');
+const btnLight = document.getElementById('btnLight');
+function setTheme(t){
+  document.body.dataset.theme = t;
+  btnDark.classList.toggle('active', t==='dark');
+  btnLight.classList.toggle('active', t==='light');
+}
+btnDark.addEventListener('click', ()=>setTheme('dark'));
+btnLight.addEventListener('click', ()=>setTheme('light'));
+</script>
+</body>
+</html>
